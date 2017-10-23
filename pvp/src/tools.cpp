@@ -1132,6 +1132,12 @@ const char* getReturnMessage(ReturnValue value)
 		case RETURNVALUE_YOUMAYNOTATTACKTHISPLAYER:
 			return "You may not attack this player.";
 
+		case RETURNVALUE_SAFEPVPMODE_1:
+ 		    return "You can't that player because you're protected by the NO PVP.";
+
+		case RETURNVALUE_SAFEPVPMODE_2:
+ 		    return "You can't that player because he is protected by the NO PVP.";
+
 		case RETURNVALUE_YOUMAYNOTATTACKTHISCREATURE:
 			return "You may not attack this creature.";
 
