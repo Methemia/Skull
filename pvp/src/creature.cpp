@@ -860,8 +860,8 @@ BlockType_t Creature::blockHit(Creature* attacker, CombatType_t combatType, int3
 bool Creature::setAttackedCreature(Creature* creature)
 {
 	if (creature) {
-		if (this->getMonster() && this->getMonster()->isPet() && this->getTile()->hasFlag(TILESTATE_PROTECTIONZONE))
-			return false;
+	if (this->getMonster() && this->getMonster()->isPet() && this->getTile()->hasFlag(TILESTATE_PROTECTIONZONE))
+ 			return false;
 
 		const Position& creaturePos = creature->getPosition();
 		if (creaturePos.z != getPosition().z || !canSee(creaturePos)) {
@@ -1116,27 +1116,27 @@ void Creature::onGainExperience(uint64_t gainExp, Creature* target)
 	}
 
 	Monster* m = getMonster();
-	if (!m->isPet()) {
-		gainExp /= 2;
-	}
+ 	if (!m->isPet()) {
+ 		gainExp /= 2;
+ 	}
 
 	master->onGainExperience(gainExp, target);
 
 	if (!m->isPet()) {
-		SpectatorHashSet spectators;
-		g_game.map.getSpectators(spectators, position, false, true);
-		if (spectators.empty()) {
-			return;
-		}
+ 		SpectatorHashSet spectators;
+ 		g_game.map.getSpectators(spectators, position, false, true);
+ 		if (spectators.empty()) {
+ 			return;
+ 		}
 
 		TextMessage message(MESSAGE_EXPERIENCE_OTHERS, ucfirst(getNameDescription()) + " gained " + std::to_string(gainExp) + (gainExp != 1 ? " experience points." : " experience point."));
-		message.position = position;
-		message.primary.color = TEXTCOLOR_WHITE_EXP;
-		message.primary.value = gainExp;
+ 		message.position = position;
+ 		message.primary.color = TEXTCOLOR_WHITE_EXP;
+ 		message.primary.value = gainExp;
 
 		for (Creature* spectator : spectators) {
-			spectator->getPlayer()->sendTextMessage(message);
-		}
+ 			spectator->getPlayer()->sendTextMessage(message);
+ 		}
 	}
 }
 
