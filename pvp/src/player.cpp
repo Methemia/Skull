@@ -709,10 +709,8 @@ bool Player::canWalkthrough(const Creature* creature) const
 		return false;
 	}
 
-	uint32_t key = 60000;
-	int32_t value;
 	const Tile* playerTile = player->getTile();
-	if (!playerTile || !playerTile->hasFlag(TILESTATE_PROTECTIONZONE) || (player->getStorageValue(key, value))) {
+	if (!playerTile || !playerTile->hasFlag(TILESTATE_PROTECTIONZONE)) {
 		return false;
 	}
 
@@ -2095,8 +2093,13 @@ void Player::death(Creature* lastHitCreature)
 		sendSkills();
 		sendReLoginWindow(unfairFightReduction);
 
-		health = healthMax;
-		mana = manaMax;
+		if (getSkull() == SKULL_BLACK) {
+			health = 40;
+			mana = 0;
+		} else {
+			health = healthMax;
+			mana = manaMax;
+		}
 
 		auto it = conditions.begin(), end = conditions.end();
 		while (it != end) {
@@ -3468,7 +3471,9 @@ void Player::onEndCondition(ConditionType_t type)
 		pzLocked = false;
 		clearAttacked();
 
-		//Skull System removed
+		if (getSkull() != SKULL_RED && getSkull() != SKULL_BLACK) {
+			setSkull(SKULL_NONE);
+		}
 	}
 
 	sendIcons();
@@ -3538,6 +3543,10 @@ void Player::onAttackedCreature(Creature* target)
 
 			if (!Combat::isInPvpZone(this, targetPlayer) && !isInWar(targetPlayer)) {
 				addAttacked(targetPlayer);
+
+				if (targetPlayer->getSkull() == SKULL_NONE && getSkull() == SKULL_NONE && !targetPlayer->hasKilled(this)) {
+					setSkull(SKULL_WHITE);
+				}
 
 				if (getSkull() == SKULL_NONE) {
 					targetPlayer->sendCreatureSkull(this);
@@ -3865,6 +3874,9 @@ void Player::setSex(PlayerSex_t newSex)
 
 Skulls_t Player::getSkull() const
 {
+	if (hasFlag(PlayerFlag_NotGainInFight)) {
+		return SKULL_NONE;
+	}
 	return skull;
 }
 
@@ -3980,6 +3992,18 @@ void Player::addUnjustifiedDead(const Player* attacked)
 		}
 	}
 
+	if (getSkull() != SKULL_BLACK) {
+		if (dayKills >= 2 * g_config.getNumber(ConfigManager::DAY_KILLS_TO_RED) || weekKills >= 2 * g_config.getNumber(ConfigManager::WEEK_KILLS_TO_RED) || monthKills >= 2 * g_config.getNumber(ConfigManager::MONTH_KILLS_TO_RED)) {
+			setSkull(SKULL_BLACK);
+			//start black skull time
+			skullTicks = static_cast<int64_t>(g_config.getNumber(ConfigManager::BLACK_SKULL_DURATION)) * 24 * 60 * 60 * 1000;
+		} else if (dayKills >= g_config.getNumber(ConfigManager::DAY_KILLS_TO_RED) || weekKills >= g_config.getNumber(ConfigManager::WEEK_KILLS_TO_RED) || monthKills >= g_config.getNumber(ConfigManager::MONTH_KILLS_TO_RED)) {
+			setSkull(SKULL_RED);
+			//reset red skull time
+			skullTicks = static_cast<int64_t>(g_config.getNumber(ConfigManager::RED_SKULL_DURATION)) * 24 * 60 * 60 * 1000;
+		}
+	}
+
 	sendUnjustifiedPoints();
 }
 
@@ -3990,6 +4014,10 @@ void Player::checkSkullTicks(int32_t ticks)
 		skullTicks = 0;
 	} else {
 		skullTicks = newTicks;
+	}
+
+	if ((skull == SKULL_RED || skull == SKULL_BLACK) && skullTicks < 1000 && !hasCondition(CONDITION_INFIGHT)) {
+		setSkull(SKULL_NONE);
 	}
 }
 
